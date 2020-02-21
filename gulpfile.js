@@ -7,7 +7,9 @@ var babelify = require("babelify");
 var browserify = require("browserify");
 var buffer = require("vinyl-buffer");
 var source = require("vinyl-source-stream");
-
+var webpack = require("webpack");
+var del = require("del");
+const webpackConfig = require('./webpack.config.js');
 var paths = {
     scss: {
         src: './src/sass/*.scss',
@@ -55,15 +57,17 @@ var paths = {
 
 
 function js() {
-    return browserify({
-            entries: paths.scripts.entries
-        }).transform(babelify)
-        .bundle()
-        .pipe(source(paths.scripts.output))
-        .pipe(buffer())
-        .pipe(sourcemaps.init({ loadMaps: true }))
-        //.pipe(uglify())
-        .pipe(dest(paths.scripts.dest));
+    return new Promise((resolve, reject) => {
+        webpack(webpackConfig, (err, stats) => {
+            if (err) {
+                return reject(err)
+            }
+            if (stats.hasErrors()) {
+                return reject(new Error(stats.compilation.errors.join('\n')))
+            }
+            resolve()
+        })
+    });
 }
 
 
